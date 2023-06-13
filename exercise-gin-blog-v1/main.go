@@ -25,29 +25,41 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/posts", func(c *gin.Context) {
-		c.JSON(http.StatusOK, Posts)
+		c.JSON(http.StatusOK, gin.H{"posts": Posts})
 	})
 
 	r.GET("/posts/:id", func(c *gin.Context) {
-		idParam := c.Param("id")
-		id, err := strconv.Atoi(idParam)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "ID harus berupa angka"})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "ID harus berupa angka"})
 			return
 		}
-
-		for _, post := range Posts {
-			if post.ID == id {
-				c.JSON(http.StatusOK, post)
+		for _, p := range Posts {
+			if p.ID == id {
+				c.JSON(http.StatusOK, gin.H{"post": p})
 				return
 			}
 		}
-
-		c.JSON(http.StatusNotFound, gin.H{"error": "Postingan tidak ditemukan"})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Postingan tidak ditemukan"})
 	})
 
 	r.POST("/posts", func(c *gin.Context) {
-		// TODO: answer here
+		var p Post
+		if err := c.ShouldBindJSON(&p); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		id := len(Posts) + 1
+		now := time.Now()
+		p.ID = id
+		p.CreatedAt = now
+		p.UpdatedAt = now
+
+		Posts = append(Posts, p)
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Postingan berhasil ditambahkan"})
+
 	})
 
 	return r
