@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,21 @@ var users = []User{
 }
 
 func authMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {} // TODO: replace this
+	return func(c *gin.Context) {
+		username, password, ok := c.Request.BasicAuth()
+		if !ok {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		for _, user := range users {
+			if username == user.Username && password == user.Password {
+				return
+			}
+			c.AbortWithStatus(http.StatusUnauthorized)
+
+		}
+	}
 }
 
 func SetupRouter() *gin.Engine {
