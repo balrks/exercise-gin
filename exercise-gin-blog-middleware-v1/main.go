@@ -65,6 +65,7 @@ func SetupRouter() *gin.Engine {
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "ID harus berupa angka"})
+			return
 		}
 
 		for _, p := range Posts {
@@ -77,7 +78,22 @@ func SetupRouter() *gin.Engine {
 	})
 
 	r.POST("/posts", func(c *gin.Context) {
-		// TODO: answer here
+		var p Post
+		err := c.ShouldBindJSON(&p)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		p.ID = len(Posts) + 1
+		p.CreatedAt = time.Now()
+		p.UpdatedAt = time.Now()
+
+		Posts = append(Posts, p)
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Postingan berhasil ditambahkan",
+			"post":    p,
+		})
 	})
 
 	return r
