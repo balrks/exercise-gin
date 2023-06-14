@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,9 +53,27 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
 	//Set up authentication middleware here // TODO: replace this
+	r.Use(authMiddleware())
 
 	r.GET("/posts", func(c *gin.Context) {
-		// TODO: answer here
+		idStr := c.Query("id")
+		if idStr == "" {
+			c.JSON(http.StatusOK, gin.H{"posts": Posts})
+			return
+		}
+
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "ID harus berupa angka"})
+		}
+
+		for _, p := range Posts {
+			if p.ID == id {
+				c.JSON(http.StatusOK, gin.H{"post": p})
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Postingan tidak ditemukan"})
 	})
 
 	r.POST("/posts", func(c *gin.Context) {
